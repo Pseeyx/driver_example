@@ -5,6 +5,7 @@ extern crate alloc;
 extern crate wdk_panic;
 
 use alloc::{ffi::CString, slice, string::String};
+
 use wdk::println;
 #[cfg(not(test))]
 use wdk_alloc::WdkAllocator;
@@ -23,29 +24,62 @@ pub unsafe extern "system" fn driver_entry(
     driver: &mut DRIVER_OBJECT,
     registry_path: PCUNICODE_STRING,
 ) -> NTSTATUS {
-    DbgPrint(CString::new("Hello World!\n").unwrap().as_ptr());
+    let string = CString::new("Hello World!\n").unwrap();
+
+    unsafe {
+        DbgPrint(string.as_ptr());
+    }
+
     driver.DriverUnload = Some(driver_exit);
 
-    let mut driver_config = WDF_DRIVER_CONFIG {
-        Size: core::mem::size_of::<WDF_DRIVER_CONFIG>() as ULONG,
-        EvtDriverDeviceAdd: Some(evt_driver_device_add),
-        ..WDF_DRIVER_CONFIG::default()
+    let mut driver_config = {
+        let wdf_driver_config_size: ULONG;
+
+        #[allow(clippy::cast_possible_truncation)]
+        {
+            const WDF_DRIVER_CONFIG_SIZE: usize = core::mem::size_of::<WDF_DRIVER_CONFIG>();
+
+            const { assert!(WDF_DRIVER_CONFIG_SIZE <= ULONG::MAX as usize) }
+
+            wdf_driver_config_size = WDF_DRIVER_CONFIG_SIZE as ULONG;
+        }
+
+        WDF_DRIVER_CONFIG {
+            Size: wdf_driver_config_size,
+            EvtDriverDeviceAdd: Some(evt_driver_device_add),
+            ..WDF_DRIVER_CONFIG::default()
+        }
     };
 
-    let wdf_driver_create_ntstatus = call_unsafe_wdf_function_binding!(
-        WdfDriverCreate,
-        driver as PDRIVER_OBJECT,
-        registry_path,
-        WDF_NO_OBJECT_ATTRIBUTES,
-        &mut driver_config,
-        WDF_NO_HANDLE.cast::<WDFDRIVER>(),
-    );
+    let driver_attributes = WDF_NO_OBJECT_ATTRIBUTES;
+    let driver_handle_output = WDF_NO_HANDLE.cast::<WDFDRIVER>();
 
-    let registry_path: UNICODE_STRING = *registry_path;
-    let registry_path = String::from_utf16_lossy(slice::from_raw_parts(
-        registry_path.Buffer,
-        registry_path.Length as usize / size_of::<WCHAR>(),
-    ));
+    let wdf_driver_create_ntstatus;
+    unsafe {
+        wdf_driver_create_ntstatus = call_unsafe_wdf_function_binding!(
+            WdfDriverCreate,
+            driver as PDRIVER_OBJECT,
+            registry_path,
+            driver_attributes,
+            &mut driver_config,
+            driver_handle_output,
+        );
+    }
+
+    let registry_path: UNICODE_STRING = unsafe { *registry_path };
+    let number_of_slice_elements = {
+        registry_path.Length as usize / core::mem::size_of_val(&unsafe { *registry_path.Buffer })
+    };
+
+    let registry_path = String::from_utf16_lossy(unsafe {
+        debug_assert!(
+            isize::try_from(number_of_slice_elements * core::mem::size_of::<WCHAR>()).is_ok()
+        );
+        slice::from_raw_parts(registry_path.Buffer, number_of_slice_elements)
+    });
+
+    println!("KMDF Driver Entry Complete! Driver Registry Parameter Key: {registry_path}");
+
     wdf_driver_create_ntstatus
 }
 
@@ -55,12 +89,17 @@ extern "C" fn evt_driver_device_add(
 ) -> NTSTATUS {
     println!("EvtDriverDeviceAdd Entered!");
 
-    let ntstatus = call_unsafe_wdf_function_binding!(
-        WdfDeviceCreate,
-        &mut device_init,
-        WDF_NO_OBJECT_ATTRIBUTES,
-        WDF_NO_HANDLE.cast::<WDFDEVICE>(),
-    );
+    let mut device_handle_output: WDFDEVICE = WDF_NO_HANDLE.cast();
+
+    let ntstatus;
+    unsafe {
+        ntstatus = call_unsafe_wdf_function_binding!(
+            WdfDeviceCreate,
+            &mut device_init,
+            WDF_NO_OBJECT_ATTRIBUTES,
+            &mut device_handle_output,
+        );
+    }
 
     println!("WdfDeviceCreate NTSTATUS: {ntstatus:#02x}");
     ntstatus
