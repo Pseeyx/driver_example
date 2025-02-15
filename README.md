@@ -29,8 +29,7 @@ provide seamless integration with WDK tools and utilities, enabling easy develop
 Before building or running this example, ensure that you have the following dependencies installed and properly
 configured:
 
-1. **Rust and Cargo**: Install the latest Rust compiler and Cargo using [rustup](https://rustup.rs/).
-2. **LLVM (Version 17.0.6)**: Required for `bindgen`, which generates bindings. For simplicity, install via `winget` or
+1. **LLVM (Version 17.0.6)**: Required for `bindgen`, which generates bindings. For simplicity, install via `winget` or
    directly download it:
    ```bash
    winget install -i LLVM.LLVM --version 17.0.6 --force
@@ -38,9 +37,9 @@ configured:
     - ⚠️ **Note**: LLVM 18 has an ARM64 bindings bug. Use LLVM 17 until a fix is released in LLVM 19. For details,
       see [this issue](https://github.com/rust-lang/rust-bindgen/issues/2842).
 
-3. **Windows Driver Kit (WDK)**: Download and configure
-   the [Enterprise WDK](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk).
-4. **Cargo Make** (Optional but Recommended): Automates additional build tasks. Install it with:
+2. **Windows Driver Kit (WDK)**: Download and configure
+   the [WDK](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk).
+3. **Cargo Make** (Optional but Recommended): Automates additional build tasks. Install it with:
    ```bash
    cargo install --locked cargo-make --no-default-features --features tls-native
    ```
