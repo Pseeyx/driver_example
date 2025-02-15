@@ -26,16 +26,6 @@ This project is a Kernel-Mode Driver Framework (KMDF) driver written in Rust.
     cargo build
     ```
 
-## Installing the Driver
-
-1. Use the `.inx` file to create an installation package.
-2. Follow the standard procedures to install the driver on your system.
-
-## Usage
-
-- The driver logs messages to the kernel debugger.
-- Modify the `KMDFDriver.DeviceDesc` and `KMDFDriver.SVCDESC` in the `.inx` file to change the driver name.
-
 ## Getting Started
 
 ### Build Requirements
