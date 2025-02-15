@@ -1,0 +1,5 @@
+﻿[build]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[env]
+LIBCLANG_PATH = "E:/LLVM/bin" # Path to LLVM's bin directory
