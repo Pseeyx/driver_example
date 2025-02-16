@@ -16,12 +16,6 @@ provide seamless integration with WDK tools and utilities, enabling easy develop
 - **`.cargo/config.toml`**: Configures Cargo-specific settings and environment variables.
 - **`kernel_driver.inx`**: INX file used for creating `.inf` installer packages for the driver.
 
-### Key Features
-
-- Written in Rust to take advantage of its memory safety guarantees and performance.
-- Full integration with the Windows Driver Kit (WDK) build tools using Rust.
-- Support for automated build tasks like `.cat` and `.inf` creation through optional tooling like `cargo-make`.
-
 ---
 
 ## Prerequisites
